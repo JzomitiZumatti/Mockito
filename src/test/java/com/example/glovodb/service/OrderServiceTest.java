@@ -34,7 +34,9 @@ public class OrderServiceTest {
     public void createOrderTest() {
         Order initialOrder = Order.builder().id(TEST_ID).name("Bob").build();
         when(orderRepository.save(any())).thenReturn(initialOrder);
+
         Order actualOrder = orderService.createOrder(new Order()).getBody();
+
         assertEquals(initialOrder, actualOrder);
     }
 
@@ -42,14 +44,18 @@ public class OrderServiceTest {
     public void getOrderByIdTest() {
         Order initialOrder = Order.builder().id(TEST_ID).name("Bob").build();
         when(orderRepository.findById(any())).thenReturn(Optional.of(initialOrder));
+
         Order actualOrder = orderService.getOrderById(anyInt()).getBody();
+
         assertEquals(initialOrder, actualOrder);
     }
 
     @Test
     public void getOrderByIdWhenIdNotFoundTest() {
         when(orderRepository.findById(anyInt())).thenReturn(Optional.empty());
+
         ResponseEntity<Order> response = orderService.getOrderById(TEST_ID);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
     @Test
@@ -62,7 +68,9 @@ public class OrderServiceTest {
                 .products(List.of(new Product()))
                 .build();
         when(orderRepository.findById(any())).thenReturn(Optional.of(initialOrder));
+
         Order actualOrder = orderService.updateOrder(anyInt(), initialOrder).getBody();
+
         assertEquals(initialOrder, actualOrder);
     }
 
@@ -70,23 +78,26 @@ public class OrderServiceTest {
     public void updateOrderWhenOrderNotFoundTest() {
         Order initialOrder = Order.builder().id(TEST_ID).build();
         when(orderRepository.findById(anyInt())).thenReturn(Optional.empty());
+
         ResponseEntity<Order> response = orderService.updateOrder(TEST_ID, initialOrder);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
     public void addProductToOrderTest() {
-        Collection<Product> products = new ArrayList<>();
-        products.add(new Product());
         Order initialOrder = Order.builder()
                 .id(TEST_ID)
                 .name("Bob")
                 .customerPhoneNumber("+123456")
                 .address("Olenivska str. 27")
-                .products(products)
+                .products(new ArrayList<>())
                 .build();
+        orderService.addProductToOrder(initialOrder.getId(), new Product());
         when(orderRepository.findById(anyInt())).thenReturn(Optional.of(initialOrder));
+
         Order actualOrder = orderService.addProductToOrder(anyInt(), new Product()).getBody();
+
         assertEquals(initialOrder, actualOrder);
     }
 
@@ -94,7 +105,9 @@ public class OrderServiceTest {
     public void addProductToOrderWhenOrderNotFoundTest() {
         Product product = Product.builder().id(TEST_ID).build();
         when(orderRepository.findById(any())).thenReturn(Optional.empty());
+
         ResponseEntity<Order> response = orderService.addProductToOrder(anyInt(), product);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
@@ -110,9 +123,11 @@ public class OrderServiceTest {
                 .address("Olenivska str. 27")
                 .products(products)
                 .build();
-        Mockito.when(orderRepository.findById(TEST_ID)).thenReturn(Optional.of(initialOrder));
-        Mockito.when(orderRepository.save(initialOrder)).thenReturn(initialOrder);
+        when(orderRepository.findById(TEST_ID)).thenReturn(Optional.of(initialOrder));
+        when(orderRepository.save(initialOrder)).thenReturn(initialOrder);
+
         ResponseEntity<Order> response = orderService.deleteProductFromOrder(initialOrder.getId(), product.getId());
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(0, Objects.requireNonNull(response.getBody()).getProducts().size());
     }
@@ -120,7 +135,9 @@ public class OrderServiceTest {
     @Test
     public void deleteProductFromOrderWhenOrderNotFoundTest() {
         when(orderRepository.findById(TEST_ID)).thenReturn(Optional.empty());
+
         ResponseEntity<Order> response = orderService.deleteProductFromOrder(TEST_ID, TEST_ID);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
     }
@@ -129,7 +146,9 @@ public class OrderServiceTest {
     public void deleteProductFromOrderWhenProductNotFoundTest() {
         Order initialOrder = Order.builder().id(TEST_ID).products(new ArrayList<>()).build();
         when(orderRepository.findById(initialOrder.getId())).thenReturn(Optional.of(initialOrder));
+
         ResponseEntity<Order> response = orderService.deleteProductFromOrder(initialOrder.getId(), TEST_ID);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
     }
@@ -144,15 +163,19 @@ public class OrderServiceTest {
                 .products(List.of(new Product()))
                 .build();
         when(orderRepository.findById(any())).thenReturn(Optional.of(beforeUpdate));
+
         ResponseEntity<Order> response = orderService.deleteOrderById(TEST_ID);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Mockito.verify(orderRepository, Mockito.times(1)).deleteById(TEST_ID);
     }
 
     @Test
     public void deleteOrderByIdWhenOrderNotFoundTest() {
-        Mockito.when(orderRepository.findById(TEST_ID)).thenReturn(Optional.empty());
+        when(orderRepository.findById(TEST_ID)).thenReturn(Optional.empty());
+
         ResponseEntity<Order> response = orderService.deleteOrderById(TEST_ID);
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         Mockito.verify(orderRepository, Mockito.never()).deleteById(anyInt());
     }
